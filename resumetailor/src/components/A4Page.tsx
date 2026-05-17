@@ -18,9 +18,9 @@ export function A4Page({ children, locked = false }: A4PageProps) {
       className={[
         'bg-white shadow-lg mx-auto',
         'w-full max-w-[794px] min-h-[1123px]',
-        'px-[64px] py-[54px]',
+        'px-[64px] py-[54px]', // px-16 py-12
         'font-[EB_Garamond] text-[10.5px] leading-relaxed text-gray-800',
-        locked ? 'opacity-75 pointer-events-none select-none' : '',
+        locked ? 'opacity-75 pointer-events-none select-none' : '', //80
       ].join(' ')}
     >
       {children}
