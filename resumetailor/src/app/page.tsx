@@ -1,12 +1,14 @@
-// src/app/editor/page.tsx
-
 'use client'
 import { useState, useCallback } from 'react'
 import { A4Page, SectionTitle } from '@/components/A4Page'
 import { ResumeBulletRow } from '@/components/ResumeBulletRow'
+import { JDInput } from '@/components/JDInput'
+import { useTailor } from '@/hooks/useTailor'
 import type { ResumeJSON, RightPaneState } from '@/types/resume'
 
-// ── Sample resume — replace with DB fetch in Phase 2 ──────────────
+// ── Sample resume ─────────────────────────────────────────────────
+// In a real app this comes from Neon DB via the user's saved resume.
+// For now, hardcoded here to test the full flow.
 const SAMPLE_RESUME: ResumeJSON = {
   name:    'Arjun Sharma',
   contact: 'arjun@email.com  •  +91 98765 43210  •  linkedin.com/in/arjunsharma  •  Hyderabad, IN',
@@ -42,8 +44,9 @@ const SAMPLE_RESUME: ResumeJSON = {
   },
 }
 
-// ── Initialise right pane state from resume ───────────────────────
-// Every bullet starts as 'original' — identical to the left pane
+// ── Init right pane state ─────────────────────────────────────────
+// Every bullet starts as 'original' — same text as left pane.
+// This is completely separate from the resume object — never mutates it.
 function initRightState(resume: ResumeJSON): RightPaneState {
   const state: RightPaneState = {}
   resume.experience.forEach(exp =>
@@ -54,17 +57,45 @@ function initRightState(resume: ResumeJSON): RightPaneState {
   return state
 }
 
-// ── Main page ────────────────────────────────────────────────────
+// ── Main page ─────────────────────────────────────────────────────
 export default function EditorPage() {
-  // original — the const here enforces that you never call setResume
+  // original — never call setResume anywhere
   const [resume] = useState<ResumeJSON>(SAMPLE_RESUME)
 
-  // Right pane state — completely separate from resume
+  // right pane — completely separate from resume
   const [rightState, setRightState] = useState<RightPaneState>(
     () => initRightState(SAMPLE_RESUME)
   )
 
-  // ── Accept a bullet — flip status to 'accepted', keep current text
+  // JD panel state
+  const [jd, setJd]         = useState('')
+  const [jdOpen, setJdOpen] = useState(true)
+
+  // runId from Neon — set after AI completes, used by Phase 3 download
+  const [runId, setRunId] = useState<string | null>(null)
+
+  // ── Phase 2: AI streaming hook ──────────────────────────────────
+  const { tailor, isLoading, error: aiError, stop } = useTailor({
+    resume,
+    setRightState,
+    onComplete: async (edits) => {
+      // Save this tailor run to Neon after streaming finishes
+      const res = await fetch('/api/tailor/save', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resumeId:    'sample-resume-id', // replace with real DB id later
+          jdText:      jd,
+          aiEditsJson: edits,
+          modelUsed:   'google/gemini-2.0-flash-exp:free',
+        }),
+      })
+      const data = await res.json()
+      setRunId(data.runId) // store so Phase 3 download can update this row
+    },
+  })
+
+  // ── Accept a single bullet ──────────────────────────────────────
   const acceptBullet = useCallback((id: string) => {
     setRightState(prev => ({
       ...prev,
@@ -72,21 +103,19 @@ export default function EditorPage() {
     }))
   }, [])
 
-  // ── Reject a bullet — revert current text back to original
+  // ── Reject a single bullet — reverts to original text ──────────
   const rejectBullet = useCallback((id: string) => {
     const originalBullet = resume.experience
       .flatMap(e => e.bullets)
       .find(b => b.id === id)
-
     if (!originalBullet) return
-
     setRightState(prev => ({
       ...prev,
       [id]: { status: 'original', current: originalBullet.text },
     }))
   }, [resume])
 
-  // ── Accept all pending changes at once
+  // ── Accept all pending changes ──────────────────────────────────
   const acceptAll = useCallback(() => {
     setRightState(prev => {
       const next = { ...prev }
@@ -99,7 +128,7 @@ export default function EditorPage() {
     })
   }, [])
 
-  // ── Counts for toolbar UI
+  // ── Counts for toolbar ──────────────────────────────────────────
   const pendingCount  = Object.values(rightState).filter(s => s.status === 'changed').length
   const acceptedCount = Object.values(rightState).filter(s => s.status === 'accepted').length
 
@@ -114,19 +143,33 @@ export default function EditorPage() {
 
         {/* centre — status messages */}
         <div className="flex items-center gap-3 flex-1 justify-center">
-          {pendingCount > 0 && (
+          {isLoading && (
+            <div className="flex items-center gap-2 text-xs text-blue-600">
+              <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              AI is tailoring your resume...
+              <button onClick={stop} className="text-red-400 underline ml-1">
+                stop
+              </button>
+            </div>
+          )}
+          {!isLoading && pendingCount > 0 && (
             <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
               {pendingCount} change{pendingCount !== 1 ? 's' : ''} to review
             </span>
           )}
-          {acceptedCount > 0 && pendingCount === 0 && (
+          {!isLoading && pendingCount === 0 && acceptedCount > 0 && (
             <span className="text-xs text-green-600">
               ✓ {acceptedCount} change{acceptedCount !== 1 ? 's' : ''} accepted — ready to download
             </span>
           )}
+          {aiError && (
+            <span className="text-xs text-red-500">
+              ⚠ {aiError.message}
+            </span>
+          )}
         </div>
 
-        {/* right — actions */}
+        {/* right — action buttons */}
         <div className="flex gap-2 flex-shrink-0">
           {pendingCount > 0 && (
             <button
@@ -136,24 +179,34 @@ export default function EditorPage() {
               ✓ Accept All
             </button>
           )}
-          {/* Phase 2 wires this up — placeholder for now */}
+
+          {/* Tailor button — disabled if JD is empty or AI is running */}
           <button
-            disabled
-            className="text-xs px-3 py-1.5 rounded bg-blue-600 text-white opacity-40 cursor-not-allowed"
-            title="AI streaming — wired up in Phase 2"
+            onClick={() => jd.trim() && tailor(jd, 'sample-resume-id')}
+            disabled={isLoading || !jd.trim()}
+            className="text-xs px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            ✨ Tailor with AI
+            {isLoading ? 'Tailoring...' : '✨ Tailor with AI'}
           </button>
-          {/* Phase 3 wires this up — placeholder for now */}
+
+          {/* Download — placeholder, Phase 3 replaces this with DownloadButton */}
           <button
             disabled={acceptedCount === 0}
             className="text-xs px-3 py-1.5 rounded bg-green-600 text-white disabled:opacity-40 disabled:cursor-not-allowed"
-            title="PDF export — wired up in Phase 3"
+            title="PDF export wired up in Phase 3"
           >
             ⬇ Download PDF
           </button>
         </div>
       </div>
+
+      {/* ── JD Input panel (collapsible) ── */}
+      <JDInput
+        value={jd}
+        onChange={setJd}
+        open={jdOpen}
+        onToggle={() => setJdOpen(o => !o)}
+      />
 
       {/* ── Split panes ── */}
       <div className="flex flex-1 overflow-hidden">
@@ -173,7 +226,8 @@ export default function EditorPage() {
           <p className="text-center text-[10px] text-gray-400 uppercase tracking-widest mb-3 select-none">
             ✏️ AI tailored version
           </p>
-          {/* Legend — only shows once there are changes */}
+
+          {/* Legend — only appears once AI has made changes */}
           {Object.values(rightState).some(s => s.status !== 'original') && (
             <div className="flex gap-3 justify-center mb-3 text-[10px] text-gray-500 flex-wrap">
               <span className="flex items-center gap-1">
@@ -183,13 +237,14 @@ export default function EditorPage() {
                 <span className="w-3 h-3 rounded bg-red-100 inline-block" /> Removed
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-yellow-50 border border-yellow-200 inline-block" /> Pending review
+                <span className="w-3 h-3 rounded bg-yellow-50 border border-yellow-200 inline-block" /> Pending
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded bg-green-50 border border-green-200 inline-block" /> Accepted
               </span>
             </div>
           )}
+
           <A4Page>
             <ResumeContent
               resume={resume}
@@ -204,9 +259,10 @@ export default function EditorPage() {
   )
 }
 
-// ── Shared resume renderer ───────────────────────────────────────
-// Used by BOTH left and right panes with the same resume data.
-// Right pane additionally receives rightState + action callbacks.
+// ── Shared resume renderer ────────────────────────────────────────
+// Used by BOTH panes with the same resume prop.
+// Left pane:  rightState and callbacks are undefined → shows original only
+// Right pane: receives rightState + callbacks → shows diff/streaming/accepted
 function ResumeContent({
   resume,
   rightState,
@@ -241,7 +297,7 @@ function ResumeContent({
             <ResumeBulletRow
               key={b.id}
               originalText={b.text}
-              state={rightState?.[b.id]}          // undefined for left pane
+              state={rightState?.[b.id]}
               onAccept={() => onAccept?.(b.id)}
               onReject={() => onReject?.(b.id)}
             />

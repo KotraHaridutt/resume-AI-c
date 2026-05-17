@@ -1,9 +1,11 @@
+// src/middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 const isPublicRoute = createRouteMatcher([
-  '/',           // Public landing page
+  '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/api/(.*)',        // ← ALL api routes are public (auth handled inside each route)
 ])
 
 export default clerkMiddleware(async (auth, req) => {
