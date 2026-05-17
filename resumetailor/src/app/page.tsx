@@ -4,49 +4,9 @@ import { A4Page, SectionTitle } from '@/components/A4Page'
 import { ResumeBulletRow } from '@/components/ResumeBulletRow'
 import { JDInput } from '@/components/JDInput'
 import { useTailor } from '@/hooks/useTailor'
+import { ResumeUpload } from '@/components/ResumeUpload'
 import type { ResumeJSON, RightPaneState } from '@/types/resume'
 
-// ── Sample resume ─────────────────────────────────────────────────
-// In a real app this comes from Neon DB via the user's saved resume.
-// For now, hardcoded here to test the full flow.
-const SAMPLE_RESUME: ResumeJSON = {
-  name:    'Arjun Sharma',
-  contact: 'arjun@email.com  •  +91 98765 43210  •  linkedin.com/in/arjunsharma  •  Hyderabad, IN',
-  experience: [
-    {
-      id:      'exp-0',
-      role:    'Software Engineer',
-      company: 'TechCorp India Pvt Ltd',
-      date:    'Jun 2022 – Present',
-      bullets: [
-        { id: 'exp-0-b-0', text: 'Built internal tools using Python and React that improved team productivity.' },
-        { id: 'exp-0-b-1', text: 'Worked on database queries and helped reduce page load time by 20%.' },
-        { id: 'exp-0-b-2', text: 'Participated in code reviews and contributed to documentation.' },
-        { id: 'exp-0-b-3', text: 'Collaborated with cross-functional teams to deliver features on schedule.' },
-      ],
-    },
-    {
-      id:      'exp-1',
-      role:    'Software Intern',
-      company: 'StartupXYZ',
-      date:    'Jan 2022 – May 2022',
-      bullets: [
-        { id: 'exp-1-b-0', text: 'Assisted in building REST APIs using Node.js and Express.' },
-        { id: 'exp-1-b-1', text: 'Wrote unit tests and helped maintain test coverage above 80%.' },
-      ],
-    },
-  ],
-  skills:    ['Python', 'React', 'Node.js', 'SQL', 'Git', 'REST APIs'],
-  education: {
-    degree: 'B.Tech Computer Science',
-    school: 'JNTU Hyderabad',
-    year:   '2022',
-  },
-}
-
-// ── Init right pane state ─────────────────────────────────────────
-// Every bullet starts as 'original' — same text as left pane.
-// This is completely separate from the resume object — never mutates it.
 function initRightState(resume: ResumeJSON): RightPaneState {
   const state: RightPaneState = {}
   resume.experience.forEach(exp =>
@@ -57,24 +17,31 @@ function initRightState(resume: ResumeJSON): RightPaneState {
   return state
 }
 
-// ── Main page ─────────────────────────────────────────────────────
-export default function EditorPage() {
-  // original — never call setResume anywhere
-  const [resume] = useState<ResumeJSON>(SAMPLE_RESUME)
+// ── Separate component so useTailor is always called ──────────────────
+interface EditorContentProps {
+  resume:        ResumeJSON
+  rightState:    RightPaneState
+  setRightState: React.Dispatch<React.SetStateAction<RightPaneState>>
+  jd:            string
+  jdOpen?:       boolean
+  onRunIdChange: (id: string) => void
+  onJdChange?:   (jd: string) => void
+  onJdToggle?:   () => void
+  onResumeChange?: () => void
+}
 
-  // right pane — completely separate from resume
-  const [rightState, setRightState] = useState<RightPaneState>(
-    () => initRightState(SAMPLE_RESUME)
-  )
-
-  // JD panel state
-  const [jd, setJd]         = useState('')
-  const [jdOpen, setJdOpen] = useState(true)
-
-  // runId from Neon — set after AI completes, used by Phase 3 download
-  const [runId, setRunId] = useState<string | null>(null)
-
-  // ── Phase 2: AI streaming hook ──────────────────────────────────
+function EditorContent({ 
+  resume, 
+  rightState, 
+  setRightState, 
+  jd, 
+  jdOpen,
+  onRunIdChange,
+  onJdChange,
+  onJdToggle,
+  onResumeChange,
+}: EditorContentProps) {
+  // ── Phase 2: AI streaming hook (always called in this component) ──────────────────────────────────
   const { tailor, isLoading, error: aiError, stop } = useTailor({
     resume,
     setRightState,
@@ -87,11 +54,11 @@ export default function EditorPage() {
           resumeId:    'sample-resume-id', // replace with real DB id later
           jdText:      jd,
           aiEditsJson: edits,
-          modelUsed:   'google/gemini-2.0-flash-exp:free',
+          modelUsed:   'nvidia/nemotron-3-nano-30b-a3b:free',
         }),
       })
       const data = await res.json()
-      setRunId(data.runId) // store so Phase 3 download can update this row
+      onRunIdChange(data.runId) // store so Phase 3 download can update this row
     },
   })
 
@@ -140,6 +107,21 @@ export default function EditorPage() {
         <span className="font-bold text-sm text-blue-600 flex-shrink-0">
           ResumeTailor
         </span>
+
+        {/* Resume name chip + change button */}
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-full">
+            <span className="text-xs text-gray-600 max-w-[160px] truncate">
+              📄 {resume.name}
+            </span>
+            <button
+              onClick={onResumeChange}
+              className="text-[10px] text-gray-400 hover:text-red-400 ml-1"
+              title="Upload a different resume"
+            >
+              ✕
+            </button>
+          </div>
+        
 
         {/* centre — status messages */}
         <div className="flex items-center gap-3 flex-1 justify-center">
@@ -203,9 +185,9 @@ export default function EditorPage() {
       {/* ── JD Input panel (collapsible) ── */}
       <JDInput
         value={jd}
-        onChange={setJd}
-        open={jdOpen}
-        onToggle={() => setJdOpen(o => !o)}
+        onChange={onJdChange || (() => {})}
+        open={jdOpen ?? true}
+        onToggle={onJdToggle || (() => {})}
       />
 
       {/* ── Split panes ── */}
@@ -256,6 +238,51 @@ export default function EditorPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function EditorPage() {
+  // null means "no resume yet" — show upload screen
+  // Once PDF is parsed, this holds the user's actual resume
+  const [resume, setResume]         = useState<ResumeJSON | null>(null)
+  const [rightState, setRightState] = useState<RightPaneState>({})
+  const [jd, setJd]                 = useState('')
+  const [jdOpen, setJdOpen]         = useState(true)
+  const [runId, setRunId]           = useState<string | null>(null)
+
+  // Called by ResumeUpload when PDF is successfully parsed
+  const handleResumeParsed = useCallback((parsed: ResumeJSON) => {
+    setResume(parsed)
+    setRightState(initRightState(parsed))
+  }, [])
+
+  // ── Show upload screen if no resume yet ──────────────────────
+  if (!resume) {
+    return (
+      <div className="h-screen bg-gray-50">
+        <ResumeUpload onParsed={handleResumeParsed} />
+      </div>
+    )
+  }
+
+  // ── Phase 2: render editor with hook that's always called ──────────────────────────────────
+  return (
+    <EditorContent
+      resume={resume}
+      rightState={rightState}
+      setRightState={setRightState}
+      jd={jd}
+      jdOpen={jdOpen}
+      onJdChange={setJd}
+      onJdToggle={() => setJdOpen(o => !o)}
+      onResumeChange={() => {
+        setResume(null)
+        setRightState({})
+        setJd('')
+        setRunId(null)
+      }}
+      onRunIdChange={setRunId}
+    />
   )
 }
 
