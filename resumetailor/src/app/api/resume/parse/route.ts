@@ -1,5 +1,3 @@
-// src/app/api/resume/parse/route.ts
-
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
@@ -90,7 +88,7 @@ RULES:
 - projects: extract ALL projects with their bullet points EXACTLY as written — do NOT rephrase
 - skills: flat array — split "Programming Languages: C, C++" into ["C", "C++"]
 - education: most recent degree only
-- activities: extra-curricular bullet points each as a separate item in the array
+- activities: each activity = one object. title should be a SHORT label (e.g. "NTPC Quiz", "IEEE Club") NOT the full sentence. The full sentence goes in bullets[0].text. Never duplicate the bullet text in the title.
 - IDs: experience → "exp-0", "exp-1" | projects → "proj-0", "proj-1" | bullets → "proj-0-b-0", etc.
 - CRITICAL: keep ALL text exactly as written — do not rephrase, summarize, or change anything
 

@@ -119,14 +119,16 @@ function BulletRow({ text }: { text: string }) {
   )
 }
 
-function SectionGroup({ section }: { section: ResumeSection }) {
+function SectionGroup({ section, showTitle = true }: { section: ResumeSection; showTitle?: boolean }) {
   return (
     <View style={{ marginBottom: 8 }}>
-      <View style={styles.projHeader}>
-        <Text style={styles.projTitle}>{section.title}</Text>
-        {section.date && <Text style={styles.projDate}>{section.date}</Text>}
-      </View>
-      {section.subtitle && (
+      {showTitle && (
+        <View style={styles.projHeader}>
+          <Text style={styles.projTitle}>{section.title}</Text>
+          {section.date && <Text style={styles.projDate}>{section.date}</Text>}
+        </View>
+      )}
+      {showTitle && section.subtitle && (
         <Text style={{ fontSize: 8.5, color: '#555', marginBottom: 3 }}>
           {section.subtitle}
         </Text>
@@ -202,7 +204,7 @@ export function ResumePDF({ resume }: { resume: ResumeJSON }) {
           <>
             <SectionTitle>Extra-Curricular Activities</SectionTitle>
             {resume.activities!.map(act => (
-              <SectionGroup key={act.id} section={act} />
+              <SectionGroup key={act.id} section={act} showTitle={false} />
             ))}
           </>
         )}
