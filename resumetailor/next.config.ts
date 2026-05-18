@@ -3,7 +3,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   // Prevents pdf-parse from being bundled by webpack (needs Node.js fs module)
-  serverExternalPackages: ['pdf-parse'],
+  serverExternalPackages: ['pdf-parse-fork'],
 
   webpack: (config, { isServer }) => {
     if (isServer) {

@@ -3,7 +3,8 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
-import { PDFParse } from 'pdf-parse'
+//import { PDFParse } from 'pdf-parse'
+import pdfParse from 'pdf-parse-fork'
 
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -72,7 +73,7 @@ export async function POST(req: Request) {
   // Convert File → Buffer → extract text with pdf-parse
   const arrayBuffer = await file.arrayBuffer()
   const buffer      = Buffer.from(arrayBuffer)
-  const parser = new PDFParse({ data: buffer })
+  const parser = new pdfParse({ data: buffer })
   const parsed = await parser.getText()
   // free resources used by pdfjs
   await parser.destroy()
