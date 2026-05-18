@@ -1,6 +1,6 @@
 export interface ResumeBullet {
-  id:   string   // unique e.g. "exp-0-b-0" — never changes
-  text: string   // original text — NEVER mutate this
+  id:   string
+  text: string
 }
 
 export interface ResumeExperience {
@@ -12,42 +12,41 @@ export interface ResumeExperience {
 }
 
 export interface ResumeSection {
-  id:      string
-  title:   string        
-  subtitle?: string         
-  date?:   string
-  bullets: ResumeBullet[]
+  id:       string
+  title:    string
+  subtitle?: string
+  date?:    string
+  bullets:  ResumeBullet[]
+}
+
+export interface ResumeEducation {
+  degree: string
+  school: string
+  year:   string
+  grade?: string   // ← CGPA, GPA, percentage etc.
 }
 
 export interface ResumeJSON {
-  name:       string
-  contact:    string
-  objective?: string        
-  experience: ResumeExperience[]   
-  projects:   ResumeSection[]      
-  skills:     string[]
-  education:  {
-    degree: string
-    school: string
-    year:   string
-  }
-  activities?: ResumeSection[] 
+  name:         string
+  contact:      string
+  objective?:   string
+  experience:   ResumeExperience[]
+  projects:     ResumeSection[]
+  skills:       string[]
+  education:    ResumeEducation      // primary (most recent) — used by PDF renderer
+  allEducation?: ResumeEducation[]   // all entries — used for display
+  activities?:  ResumeSection[]
 }
 
-
-// ── Right pane state ─────────────────────────────────────────────
-// Completely separate from ResumeJSON — original is never touched
-
 export type BulletStatus =
-  | 'original'   // unchanged, same as left pane
-  | 'streaming'  // AI is currently writing this bullet
-  | 'changed'    // AI finished — diff shown, awaiting user decision
-  | 'accepted'   // user clicked ✓ — use AI version in PDF
+  | 'original'
+  | 'streaming'
+  | 'changed'
+  | 'accepted'
 
 export interface BulletState {
   status:  BulletStatus
-  current: string   // what the right pane renders
+  current: string
 }
 
-// Keyed by bullet id
 export type RightPaneState = Record<string, BulletState>

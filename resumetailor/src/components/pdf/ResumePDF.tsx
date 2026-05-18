@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
   eduDegree: { fontSize: 9.5, fontFamily: 'Times-Bold' },
   eduYear:   { fontSize: 8,   color: '#666' },
   eduSchool: { fontSize: 8.5, color: '#555' },
+  eduGrade:  { fontSize: 8,   color: '#555', marginTop: 1 },
 })
 
 // ── Sub-components ────────────────────────────────────────
@@ -183,11 +184,20 @@ export function ResumePDF({ resume }: { resume: ResumeJSON }) {
 
         {/* Education */}
         <SectionTitle>Education</SectionTitle>
-        <View style={styles.eduRow}>
-          <Text style={styles.eduDegree}>{resume.education.degree}</Text>
-          <Text style={styles.eduYear}>{resume.education.year}</Text>
-        </View>
-        <Text style={styles.eduSchool}>{resume.education.school}</Text>
+        {/* Handle both array (new) and single object (old) shape */}
+        {(Array.isArray((resume as any).allEducation)
+          ? (resume as any).allEducation
+          : [resume.education]
+        ).map((edu: any, i: number) => (
+          <View key={i} style={{ marginBottom: 6 }}>
+            <View style={styles.eduRow}>
+              <Text style={styles.eduDegree}>{edu.degree}</Text>
+              <Text style={styles.eduYear}>{edu.year}</Text>
+            </View>
+            <Text style={styles.eduSchool}>{edu.school}</Text>
+            {edu.grade && <Text style={styles.eduGrade}>{edu.grade}</Text>}
+          </View>
+        ))}
 
         {/* Projects */}
         {(resume.projects ?? []).length > 0 && (
