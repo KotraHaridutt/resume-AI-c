@@ -3,8 +3,9 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
-//import { PDFParse } from 'pdf-parse'
-import pdfParse from 'pdf-parse-fork'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse-fork') as (buffer: Buffer) => Promise<{ text: string }>
 
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
@@ -48,29 +49,19 @@ const resumeSchema = z.object({
 })
 
 export async function POST(req: Request) {
-  // TODO: Re-enable auth after testing
-  // const { userId } = await auth()
-  // if (!userId) {
-  //   return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  // }
-
-  // Read the uploaded PDF as FormData
-  const formData  = await req.formData()
-  const file      = formData.get('resume') as File | null
+  const formData = await req.formData()
+  const file     = formData.get('resume') as File | null
 
   if (!file) {
     return Response.json({ error: 'No file uploaded' }, { status: 400 })
   }
-
   if (!file.name.endsWith('.pdf')) {
     return Response.json({ error: 'Only PDF files are supported' }, { status: 400 })
   }
-
   if (file.size > 5 * 1024 * 1024) {
     return Response.json({ error: 'File too large — max 5MB' }, { status: 400 })
   }
 
-  // Convert File → Buffer → extract text with pdf-parse
   const arrayBuffer = await file.arrayBuffer()
   const buffer      = Buffer.from(arrayBuffer)
   const parsed      = await pdfParse(buffer)
@@ -78,17 +69,14 @@ export async function POST(req: Request) {
 
   console.log('[PARSE API] Extracted raw text length:', rawText.length)
   console.log('[PARSE API] Raw text (first 500 chars):', rawText.substring(0, 500))
-  console.log('[PARSE API] Checking for EXPERIENCE section:', rawText.includes('EXPERIENCE'))
 
   if (!rawText || rawText.length < 50) {
     return Response.json(
-      { error: 'Could not extract text from PDF. Make sure it\'s not a scanned image.' },
+      { error: "Could not extract text from PDF. Make sure it's not a scanned image." },
       { status: 400 }
     )
   }
 
-  // Use AI to convert raw text → structured ResumeJSON
-  // generateObject (not streamObject) — we want the full result before responding
   const { object } = await generateObject({
     model:  openrouter('nvidia/nemotron-3-nano-30b-a3b:free'),
     schema: resumeSchema,
@@ -112,7 +100,6 @@ ${rawText}`,
 
   console.log('[PARSE API] Parsed result - experience count:', object.experience?.length)
   console.log('[PARSE API] Parsed result - projects count:', object.projects?.length)
-  console.log('[PARSE API] Full parsed object:', JSON.stringify(object).substring(0, 500))
 
   return Response.json({ resume: object })
 }
