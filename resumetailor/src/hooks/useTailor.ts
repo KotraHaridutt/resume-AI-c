@@ -1,10 +1,8 @@
 // src/hooks/useTailor.ts
 
 'use client'
-import { useEffect, useCallback, useRef } from 'react'
-import { experimental_useObject as useObject } from '@ai-sdk/react'
+import { useCallback, useRef, useState } from 'react'
 import type { TailorOutput } from '@/lib/tailor-schema'
-import { tailorSchema } from '@/lib/tailor-schema'
 import type { ResumeJSON, RightPaneState } from '@/types/resume'
 
 interface UseTailorProps {
@@ -13,100 +11,105 @@ interface UseTailorProps {
   onComplete?:   (edits: TailorOutput) => void
 }
 
+// Helper: collect ALL bullets across experience, projects, activities
+function getAllBullets(resume: ResumeJSON) {
+  return [
+    ...resume.experience.flatMap(e => e.bullets),
+    ...(resume.projects  ?? []).flatMap(p => p.bullets),
+    ...(resume.activities ?? []).flatMap(a => a.bullets),
+  ]
+}
+
 export function useTailor({ resume, setRightState, onComplete }: UseTailorProps) {
   const committedIds = useRef<Set<string>>(new Set())
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<Error | undefined>()
+  const abortControllerRef = useRef<AbortController | null>(null)
 
-  const { submit, object, isLoading, error, stop } = useObject<TailorOutput>({
-    api:    '/api/tailor',
-    schema: tailorSchema,
-    credentials: 'include', // ensure cookies (Clerk session) are sent with the request
-  })
+  const tailor = useCallback(async (jobDescription: string, resumeId: string) => {
+    console.log('[useTailor] tailor() called, JD length:', jobDescription.length)
+    console.log('[useTailor] resume sections — exp:', resume.experience?.length,
+      'projects:', resume.projects?.length, 'activities:', resume.activities?.length)
 
-  // `useObject` returns a DeepPartial<RESULT> at runtime but the SDK types
-  // may not be resolved in the editor if deps aren't installed. Cast here
-  // so we can safely access `edits` while preserving runtime behavior.
-  const typedObject = object as unknown as Partial<TailorOutput> | undefined
+    const allBullets = getAllBullets(resume)
+    console.log('[useTailor] Total bullets across all sections:', allBullets.length)
 
-  // ── While streaming: update right pane word by word ──────────────
-  useEffect(() => {
-    if (!typedObject?.edits) return
-
-    // object.edits is DeepPartial<TailorEdit[]> while streaming
-    // so every field access needs optional chaining
-    const edits = typedObject.edits as Array<{ bulletId?: string; newText?: string } | undefined>
-
-    edits.forEach(edit => {
-      const id      = edit?.bulletId
-      const newText = edit?.newText
-
-      if (!id || !newText) return
-
-      // Only update if not already committed (avoids flicker on re-renders)
-      if (!committedIds.current.has(id)) {
-        setRightState(prev => ({
-          ...prev,
-          [id]: { status: 'streaming', current: newText },
-        }))
-      }
-    })
-  }, [object, setRightState])
-
-  // ── When streaming finishes: commit all edits ─────────────────────
-  useEffect(() => {
-    if (isLoading) return                     // still streaming, do nothing
-    if (!typedObject?.edits?.length) return        // no edits came back
-
-    const allBullets = resume.experience.flatMap(e => e.bullets)
-    const edits      = typedObject.edits as Array<{ bulletId?: string; newText?: string; reason?: string } | undefined>
-
-    setRightState(prev => {
-      const next = { ...prev }
-
-      edits.forEach(edit => {
-        const id      = edit?.bulletId
-        const newText = edit?.newText
-        if (!id || !newText) return
-
-        const original = allBullets.find(b => b.id === id)
-        if (!original) return
-
-        if (newText.trim() !== original.text.trim()) {
-          // AI changed this bullet — show diff + accept/reject
-          next[id] = { status: 'changed', current: newText }
-          committedIds.current.add(id)
-        } else {
-          // AI left it the same — revert to original (no diff shown)
-          next[id] = { status: 'original', current: original.text }
-        }
-      })
-
-      return next
-    })
-
-    // Fire onComplete so EditorPage can save to Neon
-    onComplete?.(typedObject as TailorOutput)
-
-    // Reset for next tailor run
-    committedIds.current = new Set()
-
-  }, [isLoading]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── tailor() — called when user clicks "Tailor with AI" ──────────
-  const tailor = useCallback((jobDescription: string, resumeId: string) => {
-    // Reset all non-accepted bullets back to original before starting
+    // Reset all non-accepted bullets back to original
     setRightState(prev => {
       const next = { ...prev }
       Object.keys(next).forEach(id => {
-        if (next[id].status === 'accepted') return // keep accepted ones
-        const original = resume.experience.flatMap(e => e.bullets).find(b => b.id === id)
+        if (next[id].status === 'accepted') return
+        const original = allBullets.find(b => b.id === id)
         if (original) next[id] = { status: 'original', current: original.text }
       })
       return next
     })
 
     committedIds.current = new Set()
-    submit({ resume, jobDescription, resumeId })
-  }, [resume, setRightState, submit])
+    setIsLoading(true)
+    setError(undefined)
+
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = new AbortController()
+
+    try {
+      const response = await fetch('/api/tailor', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ resume, jobDescription, resumeId }),
+        signal:  abortControllerRef.current.signal,
+      })
+
+      if (!response.ok) {
+        const errText = await response.text()
+        throw new Error(`API error ${response.status}: ${errText}`)
+      }
+
+      const data = await response.json()
+      console.log('[useTailor] Response received, edits count:', data.object?.edits?.length)
+
+      if (!data.object?.edits?.length) {
+        throw new Error('AI returned no edits. Check the model and prompt in route.ts.')
+      }
+
+      const tailorOutput = data.object as TailorOutput
+      const edits = tailorOutput.edits
+
+      setRightState(prev => {
+        const next = { ...prev }
+        edits.forEach(edit => {
+          const { bulletId: id, newText } = edit
+          if (!id || !newText) return
+          const original = allBullets.find(b => b.id === id)
+          if (!original) {
+            console.warn('[useTailor] No matching bullet for id:', id)
+            return
+          }
+          if (newText.trim() !== original.text.trim()) {
+            next[id] = { status: 'changed', current: newText }
+            committedIds.current.add(id)
+          } else {
+            next[id] = { status: 'original', current: original.text }
+          }
+        })
+        return next
+      })
+
+      onComplete?.(tailorOutput)
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('[useTailor] Error:', err)
+        setError(err)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [resume, setRightState, onComplete])
+
+  const stop = useCallback(() => {
+    abortControllerRef.current?.abort()
+    setIsLoading(false)
+  }, [])
 
   return { tailor, isLoading, error, stop }
 }

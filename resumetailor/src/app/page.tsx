@@ -68,18 +68,29 @@ function EditorContent({
     resume,
     setRightState,
     onComplete: async (edits) => {
-      const res = await fetch('/api/tailor/save', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resumeId:    'user-resume',
-          jdText:      jd,
-          aiEditsJson: edits,
-          modelUsed:   'google/gemini-2.0-flash-exp:free',
-        }),
-      })
-      const data = await res.json()
-      onRunIdChange(data.runId)
+      try {
+        const res = await fetch('/api/tailor/save', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            resumeId:    'user-resume',
+            jdText:      jd,
+            aiEditsJson: edits,
+            modelUsed:   'google/gemini-2.0-flash-exp:free',
+          }),
+        })
+        
+        if (!res.ok) {
+          console.error('[EditorContent] Save failed:', res.status, res.statusText)
+          return
+        }
+        
+        const data = await res.json()
+        onRunIdChange(data.runId)
+        console.log('[EditorContent] Tailor saved with runId:', data.runId)
+      } catch (error) {
+        console.error('[EditorContent] Error saving tailor:', error)
+      }
     },
   })
 

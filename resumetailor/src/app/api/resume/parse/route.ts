@@ -73,11 +73,12 @@ export async function POST(req: Request) {
   // Convert File → Buffer → extract text with pdf-parse
   const arrayBuffer = await file.arrayBuffer()
   const buffer      = Buffer.from(arrayBuffer)
-  const parser = new pdfParse({ data: buffer })
-  const parsed = await parser.getText()
-  // free resources used by pdfjs
-  await parser.destroy()
+  const parsed      = await pdfParse(buffer)
   const rawText     = parsed.text.trim()
+
+  console.log('[PARSE API] Extracted raw text length:', rawText.length)
+  console.log('[PARSE API] Raw text (first 500 chars):', rawText.substring(0, 500))
+  console.log('[PARSE API] Checking for EXPERIENCE section:', rawText.includes('EXPERIENCE'))
 
   if (!rawText || rawText.length < 50) {
     return Response.json(
@@ -97,7 +98,7 @@ RULES:
 - name: full name only
 - contact: combine phone, email, city, LinkedIn, GitHub into one string separated by  •
 - objective: extract verbatim if present
-- experience: ONLY real work experience or internships. If none exist, return empty array []
+- experience: Extract ALL work experience, internships, or job positions. Look for role/position title, company name, and date. Return empty array [] ONLY if absolutely no experience found.
 - projects: extract ALL projects with their bullet points EXACTLY as written — do NOT rephrase
 - skills: flat array — split "Programming Languages: C, C++" into ["C", "C++"]
 - education: most recent degree only
@@ -108,6 +109,10 @@ RULES:
 RESUME TEXT:
 ${rawText}`,
   })
+
+  console.log('[PARSE API] Parsed result - experience count:', object.experience?.length)
+  console.log('[PARSE API] Parsed result - projects count:', object.projects?.length)
+  console.log('[PARSE API] Full parsed object:', JSON.stringify(object).substring(0, 500))
 
   return Response.json({ resume: object })
 }
