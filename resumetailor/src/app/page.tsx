@@ -11,14 +11,30 @@ import { useDownload }             from '@/hooks/useDownload'
 import { DownloadButton }          from '@/components/DownloadButton'
 import type { ResumeJSON, RightPaneState } from '@/types/resume'
  
-
 function initRightState(resume: ResumeJSON): RightPaneState {
   const state: RightPaneState = {}
+  
+  // Experience bullets
   resume.experience.forEach(exp =>
     exp.bullets.forEach(b => {
       state[b.id] = { status: 'original', current: b.text }
     })
   )
+  
+  // Project bullets — NEW
+  resume.projects.forEach(proj =>
+    proj.bullets.forEach(b => {
+      state[b.id] = { status: 'original', current: b.text }
+    })
+  )
+
+  // Activity bullets — NEW
+  resume.activities?.forEach(act =>
+    act.bullets.forEach(b => {
+      state[b.id] = { status: 'original', current: b.text }
+    })
+  )
+
   return state
 }
 
@@ -308,6 +324,52 @@ function ResumeContent({
         <span className="text-[8.5px] text-gray-500">{resume.education.year}</span>
       </div>
       <p className="text-[9px] text-gray-600">{resume.education.school}</p>
+
+      
+
+{/* Projects */}
+{resume.projects.length > 0 && (
+  <>
+    <SectionTitle>Projects</SectionTitle>
+    {resume.projects.map(proj => (
+      <div key={proj.id} className="mb-[10px]">
+        <div className="flex justify-between items-baseline">
+          <span className="text-[10.5px] font-semibold text-gray-900">{proj.title}</span>
+          {proj.date && <span className="text-[8.5px] text-gray-500">{proj.date}</span>}
+        </div>
+        {proj.bullets.map(b => (
+          <ResumeBulletRow
+            key={b.id}
+            originalText={b.text}
+            state={rightState?.[b.id]}
+            onAccept={() => onAccept?.(b.id)}
+            onReject={() => onReject?.(b.id)}
+          />
+        ))}
+      </div>
+    ))}
+  </>
+)}
+
+{/* Extra-curricular */}
+{resume.activities && resume.activities.length > 0 && (
+  <>
+    <SectionTitle>Extra-Curricular Activities</SectionTitle>
+    {resume.activities.map(act => (
+      <div key={act.id} className="mb-[6px]">
+        {act.bullets.map(b => (
+          <ResumeBulletRow
+            key={b.id}
+            originalText={b.text}
+            state={rightState?.[b.id]}
+            onAccept={() => onAccept?.(b.id)}
+            onReject={() => onReject?.(b.id)}
+          />
+        ))}
+      </div>
+    ))}
+  </>
+)}
     </>
   )
 }

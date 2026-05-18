@@ -11,17 +11,29 @@ export interface ResumeExperience {
   bullets: ResumeBullet[]
 }
 
+export interface ResumeSection {
+  id:      string
+  title:   string        
+  subtitle?: string         
+  date?:   string
+  bullets: ResumeBullet[]
+}
+
 export interface ResumeJSON {
   name:       string
   contact:    string
-  experience: ResumeExperience[]
+  objective?: string        
+  experience: ResumeExperience[]   
+  projects:   ResumeSection[]      
   skills:     string[]
   education:  {
     degree: string
     school: string
     year:   string
   }
+  activities?: ResumeSection[] 
 }
+
 
 // ── Right pane state ─────────────────────────────────────────────
 // Completely separate from ResumeJSON — original is never touched

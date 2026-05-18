@@ -16,17 +16,22 @@ const openrouter = createOpenAI({
 
 // Zod schema that mirrors your ResumeJSON type exactly
 const resumeSchema = z.object({
-  name:    z.string(),
-  contact: z.string(),
+  name:      z.string(),
+  contact:   z.string(),
+  objective: z.string().optional(),
   experience: z.array(z.object({
     id:      z.string(),
     role:    z.string(),
     company: z.string(),
     date:    z.string(),
-    bullets: z.array(z.object({
-      id:   z.string(),
-      text: z.string(),
-    })),
+    bullets: z.array(z.object({ id: z.string(), text: z.string() })),
+  })),
+  projects: z.array(z.object({
+    id:       z.string(),
+    title:    z.string(),
+    subtitle: z.string().optional(),
+    date:     z.string().optional(),
+    bullets:  z.array(z.object({ id: z.string(), text: z.string() })),
   })),
   skills: z.array(z.string()),
   education: z.object({
@@ -34,6 +39,11 @@ const resumeSchema = z.object({
     school: z.string(),
     year:   z.string(),
   }),
+  activities: z.array(z.object({
+    id:      z.string(),
+    title:   z.string(),
+    bullets: z.array(z.object({ id: z.string(), text: z.string() })),
+  })).optional(),
 })
 
 export async function POST(req: Request) {
@@ -83,13 +93,16 @@ export async function POST(req: Request) {
     prompt: `You are a resume parser. Convert the following resume text into structured JSON.
 
 RULES:
-- Generate unique IDs for experience entries: "exp-0", "exp-1", etc.
-- Generate unique IDs for bullets: "exp-0-b-0", "exp-0-b-1", "exp-1-b-0", etc.
-- contact field: combine email, phone, location, LinkedIn into one string separated by  •
-- Keep bullet text exactly as written — do NOT rephrase anything
-- skills: extract as a flat array of individual skill strings
-- education: take the most recent/highest degree only
-- If a field is missing, use an empty string — never null
+- name: full name only
+- contact: combine phone, email, city, LinkedIn, GitHub into one string separated by  •
+- objective: extract verbatim if present
+- experience: ONLY real work experience or internships. If none exist, return empty array []
+- projects: extract ALL projects with their bullet points EXACTLY as written — do NOT rephrase
+- skills: flat array — split "Programming Languages: C, C++" into ["C", "C++"]
+- education: most recent degree only
+- activities: extra-curricular bullet points each as a separate item in the array
+- IDs: experience → "exp-0", "exp-1" | projects → "proj-0", "proj-1" | bullets → "proj-0-b-0", etc.
+- CRITICAL: keep ALL text exactly as written — do not rephrase, summarize, or change anything
 
 RESUME TEXT:
 ${rawText}`,
