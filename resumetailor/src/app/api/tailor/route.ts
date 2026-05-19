@@ -76,7 +76,7 @@ export async function POST(req: Request) {
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature:      0.2,
-            maxOutputTokens:  3000,
+            maxOutputTokens:  8192,
             responseMimeType: 'application/json',
           },
         }),
