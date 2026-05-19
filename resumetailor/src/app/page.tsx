@@ -1,5 +1,3 @@
-// src/app/editor/page.tsx — COMPLETE FINAL VERSION
-
 'use client'
 import { useState, useCallback } from 'react'
 import { A4Page, SectionTitle }   from '@/components/A4Page'
@@ -300,87 +298,121 @@ function ResumeContent({
   onAccept?:   (id: string) => void
   onReject?:   (id: string) => void
 }) {
+  // Support both array (new parser) and single object (old parser) for education
+  const allEducation: Array<{ degree: string; school: string; year: string; grade?: string }> =
+    Array.isArray((resume as any).allEducation)
+      ? (resume as any).allEducation
+      : [resume.education]
+
   return (
     <>
+      {/* Header */}
       <h1 className="text-[16px] font-bold text-center text-gray-900 tracking-wide">
         {resume.name}
       </h1>
       <p className="text-[8.5px] text-center text-gray-500 border-b-[1.5px] border-gray-800 pb-[8px] mb-[12px]">
         {resume.contact}
       </p>
-      <SectionTitle>Experience</SectionTitle>
-      {resume.experience.map(exp => (
-        <div key={exp.id} className="mb-[10px]">
-          <div className="flex justify-between items-baseline">
-            <span className="text-[10.5px] font-semibold text-gray-900">{exp.role}</span>
-            <span className="text-[8.5px] text-gray-500">{exp.date}</span>
-          </div>
-          <p className="text-[9px] text-gray-600 mb-[4px]">{exp.company}</p>
-          {exp.bullets.map(b => (
-            <ResumeBulletRow
-              key={b.id}
-              originalText={b.text}
-              state={rightState?.[b.id]}
-              onAccept={() => onAccept?.(b.id)}
-              onReject={() => onReject?.(b.id)}
-            />
+
+      {/* Objective */}
+      {resume.objective && (
+        <>
+          <SectionTitle>Objective</SectionTitle>
+          <p className="text-[9px] text-gray-700 mb-[8px] leading-relaxed">{resume.objective}</p>
+        </>
+      )}
+
+      {/* Experience — only show section if there are entries */}
+      {resume.experience.length > 0 && (
+        <>
+          <SectionTitle>Experience</SectionTitle>
+          {resume.experience.map(exp => (
+            <div key={exp.id} className="mb-[10px]">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[10.5px] font-semibold text-gray-900">{exp.role}</span>
+                <span className="text-[8.5px] text-gray-500">{exp.date}</span>
+              </div>
+              <p className="text-[9px] text-gray-600 mb-[4px]">{exp.company}</p>
+              {exp.bullets.map(b => (
+                <ResumeBulletRow
+                  key={b.id}
+                  originalText={b.text}
+                  state={rightState?.[b.id]}
+                  onAccept={() => onAccept?.(b.id)}
+                  onReject={() => onReject?.(b.id)}
+                />
+              ))}
+            </div>
           ))}
+        </>
+      )}
+
+      {/* Skills */}
+      {resume.skills.length > 0 && (
+        <>
+          <SectionTitle>Skills</SectionTitle>
+          <p className="text-[9px] text-gray-700 mb-[4px]">{resume.skills.join('  •  ')}</p>
+        </>
+      )}
+
+      {/* Education — all degrees */}
+      <SectionTitle>Education</SectionTitle>
+      {allEducation.map((edu, i) => (
+        <div key={i} className="mb-[6px]">
+          <div className="flex justify-between items-baseline">
+            <span className="text-[10.5px] font-semibold text-gray-900">{edu.degree}</span>
+            <span className="text-[8.5px] text-gray-500">{edu.year}</span>
+          </div>
+          <p className="text-[9px] text-gray-600">{edu.school}</p>
+          {edu.grade && (
+            <p className="text-[8.5px] text-gray-500">{edu.grade}</p>
+          )}
         </div>
       ))}
-      <SectionTitle>Skills</SectionTitle>
-      <p className="text-[9px] text-gray-700">{resume.skills.join('  •  ')}</p>
-      <SectionTitle>Education</SectionTitle>
-      <div className="flex justify-between items-baseline">
-        <span className="text-[10.5px] font-semibold text-gray-900">{resume.education.degree}</span>
-        <span className="text-[8.5px] text-gray-500">{resume.education.year}</span>
-      </div>
-      <p className="text-[9px] text-gray-600">{resume.education.school}</p>
 
-      
+      {/* Projects */}
+      {resume.projects.length > 0 && (
+        <>
+          <SectionTitle>Projects</SectionTitle>
+          {resume.projects.map(proj => (
+            <div key={proj.id} className="mb-[10px]">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[10.5px] font-semibold text-gray-900">{proj.title}</span>
+                {proj.date && <span className="text-[8.5px] text-gray-500">{proj.date}</span>}
+              </div>
+              {proj.bullets.map(b => (
+                <ResumeBulletRow
+                  key={b.id}
+                  originalText={b.text}
+                  state={rightState?.[b.id]}
+                  onAccept={() => onAccept?.(b.id)}
+                  onReject={() => onReject?.(b.id)}
+                />
+              ))}
+            </div>
+          ))}
+        </>
+      )}
 
-{/* Projects */}
-{resume.projects.length > 0 && (
-  <>
-    <SectionTitle>Projects</SectionTitle>
-    {resume.projects.map(proj => (
-      <div key={proj.id} className="mb-[10px]">
-        <div className="flex justify-between items-baseline">
-          <span className="text-[10.5px] font-semibold text-gray-900">{proj.title}</span>
-          {proj.date && <span className="text-[8.5px] text-gray-500">{proj.date}</span>}
-        </div>
-        {proj.bullets.map(b => (
-          <ResumeBulletRow
-            key={b.id}
-            originalText={b.text}
-            state={rightState?.[b.id]}
-            onAccept={() => onAccept?.(b.id)}
-            onReject={() => onReject?.(b.id)}
-          />
-        ))}
-      </div>
-    ))}
-  </>
-)}
-
-{/* Extra-curricular */}
-{resume.activities && resume.activities.length > 0 && (
-  <>
-    <SectionTitle>Extra-Curricular Activities</SectionTitle>
-    {resume.activities.map(act => (
-      <div key={act.id} className="mb-[6px]">
-        {act.bullets.map(b => (
-          <ResumeBulletRow
-            key={b.id}
-            originalText={b.text}
-            state={rightState?.[b.id]}
-            onAccept={() => onAccept?.(b.id)}
-            onReject={() => onReject?.(b.id)}
-          />
-        ))}
-      </div>
-    ))}
-  </>
-)}
+      {/* Extra-Curricular Activities */}
+      {resume.activities && resume.activities.length > 0 && (
+        <>
+          <SectionTitle>Extra-Curricular Activities</SectionTitle>
+          {resume.activities.map(act => (
+            <div key={act.id} className="mb-[6px]">
+              {act.bullets.map(b => (
+                <ResumeBulletRow
+                  key={b.id}
+                  originalText={b.text}
+                  state={rightState?.[b.id]}
+                  onAccept={() => onAccept?.(b.id)}
+                  onReject={() => onReject?.(b.id)}
+                />
+              ))}
+            </div>
+          ))}
+        </>
+      )}
     </>
   )
 }

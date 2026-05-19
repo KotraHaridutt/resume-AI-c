@@ -1,5 +1,5 @@
 // src/app/api/resume/parse/route.ts
-export const maxDuration = 30
+export const maxDuration = 60
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { z } from 'zod'
@@ -12,7 +12,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 const resumeSchema = z.object({
   name:      z.string(),
   contact:   z.string(),
-  objective: z.string().optional(),
+  objective: z.string().nullable().optional(),
   experience: z.array(z.object({
     id:      z.string(),
     role:    z.string(),
@@ -23,8 +23,8 @@ const resumeSchema = z.object({
   projects: z.array(z.object({
     id:       z.string(),
     title:    z.string(),
-    subtitle: z.string().optional(),
-    date:     z.string().optional(),
+    subtitle: z.string().nullable().optional(),
+    date:     z.string().nullable().optional(),
     bullets:  z.array(z.object({ id: z.string(), text: z.string() })),
   })),
   skills:    z.array(z.string()),
@@ -45,14 +45,21 @@ const resumeSchema = z.object({
 // Keep old education shape for PDF rendering compatibility
 const resumeSchemaCompat = resumeSchema.transform(data => ({
   ...data,
-  // PDF renderer expects education as single object — use first/most recent
+  // Coerce null → undefined so downstream code never sees null
+  objective: data.objective ?? undefined,
+  projects: data.projects.map(p => ({
+    ...p,
+    date:     p.date     ?? undefined,
+    subtitle: p.subtitle ?? undefined,
+  })),
+  // PDF renderer expects single education object — use most recent
   education: {
     degree: data.education[0]?.degree ?? '',
     school: data.education[0]?.school ?? '',
     year:   data.education[0]?.year   ?? '',
-    grade:  data.education[0]?.grade,
+    grade:  data.education[0]?.grade  ?? undefined,
   },
-  // Keep full list for future use
+  // Keep full list for display
   allEducation: data.education,
 }))
 
@@ -82,7 +89,7 @@ export async function POST(req: Request) {
     model: 'gemini-2.5-flash',
     generationConfig: {
       temperature:      0,
-      maxOutputTokens:  6000,
+      maxOutputTokens:  8192,
       responseMimeType: 'application/json',
     },
   })
@@ -158,7 +165,12 @@ ${rawText}`
     resume = resumeSchemaCompat.parse(obj)
   } catch (err) {
     console.error('[PARSE API] Schema validation failed:', err)
-    return Response.json({ error: 'Failed to parse resume structure.' }, { status: 500 })
+    console.error('[PARSE API] Raw output that failed (full):', raw)
+    console.error('[PARSE API] Cleaned output that failed:', cleaned.slice(0, 500))
+    return Response.json({
+      error: 'Failed to parse resume structure.',
+      detail: err instanceof Error ? err.message : String(err),
+    }, { status: 500 })
   }
 
   console.log('[PARSE API] education entries:', (resume as any).allEducation?.length)
