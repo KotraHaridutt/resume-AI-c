@@ -1,11 +1,9 @@
 // src/app/api/tailor/route.ts
-export const maxDuration = 30
+export const runtime     = 'edge'
+export const maxDuration = 60
 
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { ResumeJSON } from '@/types/resume'
 import type { TailorOutput } from '@/lib/tailor-schema'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 function extractJSON(raw: string): unknown {
   const stripped = raw.replace(/```(?:json)?\s*([\s\S]*?)```/gi, '$1').trim()
@@ -55,15 +53,6 @@ export async function POST(req: Request) {
       .map(b => `{"id":"${b.id}","text":${JSON.stringify(b.text)}}`)
       .join(', ')
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',   
-      generationConfig: {
-        temperature:     0.2,
-        maxOutputTokens: 3000,
-        responseMimeType: 'application/json',  
-      },
-    })
-
     const prompt =
       `You are a professional resume writer who rewrites bullets WITHOUT changing facts.\n` +
       `You NEVER invent new projects, tools, companies or metrics.\n\n` +
@@ -78,8 +67,24 @@ export async function POST(req: Request) {
       `JOB DESCRIPTION:\n${jobDescription.slice(0, 1500)}\n\n` +
       `BULLETS:\n[${bulletsList}]`
 
-    const result  = await model.generateContent(prompt)
-    const raw     = result.response.text()
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature:      0.2,
+            maxOutputTokens:  3000,
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    )
+    if (!geminiRes.ok) throw new Error(`Gemini error: ${geminiRes.status}`)
+    const geminiData = await geminiRes.json()
+    const raw = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
     console.log('[TAILOR API] Raw response preview:', raw.slice(0, 200))
 
     const parsed  = extractJSON(raw)
