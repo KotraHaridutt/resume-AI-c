@@ -5,6 +5,7 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/editor(.*)',
   '/api/(.*)',        // ← ALL api routes are public (auth handled inside each route)
 ])
 
