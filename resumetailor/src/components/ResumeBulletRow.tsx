@@ -27,12 +27,20 @@ export function ResumeBulletRow({
   onReject,
 }: ResumeBulletRowProps) {
 
+  // ── HELPER TO PARSE BOLD ─────────────────────────────────
+  const renderBoldText = (text: string) => {
+    return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
+      if (i % 2 === 1) return <strong key={i} style={{ fontWeight: 700, WebkitFontSmoothing: 'antialiased' }} className="font-bold">{part}</strong>
+      return <span key={i}>{part}</span>
+    })
+  }
+
   // ── LEFT PANE — no state prop ─────────────────────────────────
   if (!state) {
     return (
       <div className="flex gap-[6px] mb-[4px] items-start">
         <span className="mt-[5px] w-[3px] h-[3px] rounded-full bg-gray-500 flex-shrink-0" />
-        <span className="text-[9.5px] leading-relaxed">{originalText}</span>
+        <span className="text-[9.5px] leading-relaxed">{renderBoldText(originalText)}</span>
       </div>
     )
   }
@@ -45,7 +53,7 @@ export function ResumeBulletRow({
       <div className="flex gap-[6px] mb-[4px] items-start">
         <span className="mt-[5px] w-[3px] h-[3px] rounded-full bg-blue-400 flex-shrink-0 animate-pulse" />
         <span className="text-[9.5px] leading-relaxed text-blue-700 flex-1">
-          {current}
+          {renderBoldText(current)}
           {/* blinking cursor */}
           <span className="inline-block w-[2px] h-[10px] bg-blue-500 ml-[2px] align-middle animate-pulse" />
         </span>
@@ -70,7 +78,7 @@ export function ResumeBulletRow({
                   key={i}
                   className="bg-green-100 text-green-800 no-underline rounded px-[2px]"
                 >
-                  {span.text}{' '}
+                  {renderBoldText(span.text)}{' '}
                 </ins>
               )
             }
@@ -80,11 +88,11 @@ export function ResumeBulletRow({
                   key={i}
                   className="bg-red-100 text-red-700 line-through rounded px-[2px]"
                 >
-                  {span.text}{' '}
+                  {renderBoldText(span.text)}{' '}
                 </del>
               )
             }
-            return <span key={i}>{span.text} </span>
+            return <span key={i}>{renderBoldText(span.text)} </span>
           })}
         </span>
 
@@ -124,7 +132,7 @@ export function ResumeBulletRow({
           status === 'accepted' ? 'bg-green-500' : 'bg-gray-500',
         ].join(' ')}
       />
-      <span className="text-[9.5px] leading-relaxed flex-1">{current}</span>
+      <span className="text-[9.5px] leading-relaxed flex-1">{renderBoldText(current)}</span>
       {status === 'accepted' && (
         <span className="text-[8px] text-green-600 flex-shrink-0 mt-[1px]">
           ✓ accepted

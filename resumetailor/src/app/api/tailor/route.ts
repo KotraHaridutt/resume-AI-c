@@ -63,7 +63,8 @@ export async function POST(req: Request) {
       `2. NEVER invent projects, tools, or metrics not in the original bullet\n` +
       `3. Only change wording to mirror job description keywords — do not change facts\n` +
       `4. If a bullet already fits well, return it unchanged\n` +
-      `5. One edit per bullet — same count in output as input\n\n` +
+      `5. One edit per bullet — same count in output as input\n` +
+      `6. VERY IMPORTANT: Wrap any inserted or modified keywords from the job description in **double asterisks** to make them bold (e.g. **Machine Learning**)\n\n` +
       `JOB DESCRIPTION:\n${jobDescription.slice(0, 1500)}\n\n` +
       `BULLETS:\n[${bulletsList}]`
 

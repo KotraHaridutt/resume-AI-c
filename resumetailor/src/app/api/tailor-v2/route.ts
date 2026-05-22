@@ -42,7 +42,8 @@ function buildPrompt(bullets: { id: string; text: string }[], jd: string): strin
     `4. Only swap/insert keywords from the JD — nothing else changes\n` +
     `5. If bullet already matches JD well — return it EXACTLY unchanged\n` +
     `6. newText must be within 20% of original word count\n` +
-    `7. One edit per bullet, same count in and out\n\n` +
+    `7. One edit per bullet, same count in and out\n` +
+    `8. VERY IMPORTANT: Wrap any inserted or modified keywords from the job description in **double asterisks** to make them bold (e.g. **Machine Learning**)\n\n` +
     `JOB DESCRIPTION:\n${jd.slice(0, 1500)}\n\n` +
     `BULLETS:\n[${list}]`
   )

@@ -107,6 +107,15 @@ const styles = StyleSheet.create({
 
 // ── Sub-components ────────────────────────────────────────
 
+function renderPdfBoldText(text: string) {
+  return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
+    if (i % 2 === 1) {
+      return <Text key={i} style={{ fontFamily: 'Times-Bold' }}>{part}</Text>;
+    }
+    return part;
+  });
+}
+
 function SectionTitle({ children }: { children: string }) {
   return <Text style={styles.sectionTitle}>{children}</Text>
 }
@@ -115,7 +124,7 @@ function BulletRow({ text }: { text: string }) {
   return (
     <View style={styles.bulletRow}>
       <View style={styles.bulletDot} />
-      <Text style={styles.bulletText}>{text}</Text>
+      <Text style={styles.bulletText}>{renderPdfBoldText(text)}</Text>
     </View>
   )
 }

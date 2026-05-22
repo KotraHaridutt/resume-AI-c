@@ -7,16 +7,24 @@ import type { HtmlResume, BulletStateMap, BulletStatus } from '@/types/html-resu
 
 // ── Inject current bullet states into HTML ───────────────────────
 function applyEditsToHtml(html: string, states: BulletStateMap): string {
+  const parseHtmlBold = (t: string) => t.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: bold;">$1</strong>');
   return html.replace(
     /(<span\s+data-bullet-id="([^"]+)"[^>]*>)[^<]+(<\/span>)/g,
     (_, open, id, close) => {
       const state = states[id]
-      if (!state || state.status === 'original') return _
+      if (!state || state.status === 'original') {
+        // Also parse bold on original text if it accidentally contains **
+        if (_ && _.includes('**')) {
+          return _.replace(/>([^<]+)</, (match, inner) => `>${parseHtmlBold(inner)}<`);
+        }
+        return _;
+      }
       // Highlight accepted = green, pending = yellow
       const bg = state.status === 'accepted'
         ? 'background:#dcfce7;border-radius:2px;'
         : 'background:#fef9c3;border-radius:2px;'
-      return `${open.replace('>', ` style="${bg}">`)}${state.current}${close}`
+      const currentHtml = parseHtmlBold(state.current);
+      return `${open.replace('>', ` style="${bg}">`)}${currentHtml}${close}`
     }
   )
 }
@@ -43,6 +51,14 @@ function printHtml(html: string) {
   win.document.close()
   win.focus()
   setTimeout(() => { win.print(); win.close() }, 500)
+}
+
+const renderBoldText = (text: string) => {
+  if (!text) return null;
+  return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
+    if (i % 2 === 1) return <strong key={i} style={{ fontWeight: 'bold' }}>{part}</strong>
+    return <span key={i}>{part}</span>
+  })
 }
 
 // ── Bullet review panel ──────────────────────────────────────────
@@ -92,8 +108,8 @@ function BulletReviewPanel({
                     : 'bg-yellow-50 border-yellow-200'
                 }`}
               >
-                <div className="text-gray-400 line-through mb-1 leading-relaxed">{b.text}</div>
-                <div className="text-gray-800 leading-relaxed">{state?.current}</div>
+                <div className="text-gray-400 line-through mb-1 leading-relaxed">{renderBoldText(b.text)}</div>
+                <div className="text-gray-800 leading-relaxed">{renderBoldText(state?.current || '')}</div>
                 {state?.status === 'changed' && (
                   <div className="flex gap-2 mt-2">
                     <button
