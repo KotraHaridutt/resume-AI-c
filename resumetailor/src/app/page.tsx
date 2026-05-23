@@ -214,16 +214,7 @@ function EditorContent({
 
       {/* Split panes */}
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-1/2 overflow-y-auto bg-gray-200 p-5 border-r border-gray-300">
-          <p className="text-center text-[10px] text-gray-400 uppercase tracking-widest mb-3 select-none">
-            🔒 Original — locked
-          </p>
-          <A4Page locked>
-            <ResumeContent resume={resume} />
-          </A4Page>
-        </div>
-
-        <div className="w-1/2 overflow-y-auto bg-gray-100 p-5">
+        <div className="flex-1 w-full overflow-y-auto bg-gray-100 p-5">
           <p className="text-center text-[10px] text-gray-400 uppercase tracking-widest mb-3 select-none">
             ✏️ AI tailored version
           </p>
