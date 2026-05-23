@@ -29,6 +29,7 @@ export function ResumeBulletRow({
 
   // ── HELPER TO PARSE BOLD ─────────────────────────────────
   const renderBoldText = (text: string) => {
+    if (!text) return null
     return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
       if (i % 2 === 1) return <strong key={i} style={{ fontWeight: 700, WebkitFontSmoothing: 'antialiased' }} className="font-bold">{part}</strong>
       return <span key={i}>{part}</span>
@@ -37,6 +38,7 @@ export function ResumeBulletRow({
 
   // ── LEFT PANE — no state prop ─────────────────────────────────
   if (!state) {
+    if (!originalText || !originalText.trim()) return null
     return (
       <div className="flex gap-[6px] mb-[4px] items-start">
         <span className="mt-[5px] w-[3px] h-[3px] rounded-full bg-gray-500 flex-shrink-0" />
@@ -119,6 +121,10 @@ export function ResumeBulletRow({
 
   // ── RIGHT PANE — ACCEPTED ─────────────────────────────────────
   // status === 'accepted' OR status === 'original'
+  if (status === 'accepted' && current.trim() === '') {
+    return null; // Skip rendering completely if a deletion was accepted
+  }
+
   return (
     <div
       className={[

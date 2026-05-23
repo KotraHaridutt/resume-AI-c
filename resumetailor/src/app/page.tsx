@@ -7,6 +7,7 @@ import { useTailor }               from '@/hooks/useTailor'
 import { ResumeUpload }            from '@/components/ResumeUpload'
 import { useDownload }             from '@/hooks/useDownload'
 import { DownloadButton }          from '@/components/DownloadButton'
+import { ResumeChat }              from '@/components/ResumeChat'
 import type { ResumeJSON, RightPaneState } from '@/types/resume'
  
 function initRightState(resume: ResumeJSON): RightPaneState {
@@ -107,9 +108,12 @@ function EditorContent({
   }, [setRightState])
 
   const rejectBullet = useCallback((id: string) => {
-    const originalBullet = resume.experience
-      .flatMap(e => e.bullets)
-      .find(b => b.id === id)
+    const allBullets = [
+      ...resume.experience.flatMap(e => e.bullets),
+      ...(resume.projects ?? []).flatMap(p => p.bullets),
+      ...(resume.activities ?? []).flatMap(a => a.bullets),
+    ]
+    const originalBullet = allBullets.find(b => b.id === id)
     if (!originalBullet) return
     setRightState(prev => ({
       ...prev,
@@ -214,6 +218,12 @@ function EditorContent({
 
       {/* Split panes */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Left pane: AI Chat */}
+        <div className="w-1/3 min-w-[300px] border-r border-gray-300 bg-white">
+          <ResumeChat resume={resume} setRightState={setRightState} />
+        </div>
+
+        {/* Right pane: Preview */}
         <div className="flex-1 w-full overflow-y-auto bg-gray-100 p-5">
           <p className="text-center text-[10px] text-gray-400 uppercase tracking-widest mb-3 select-none">
             ✏️ AI tailored version
