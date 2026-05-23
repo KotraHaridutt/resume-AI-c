@@ -40,9 +40,9 @@ export function ResumeBulletRow({
   if (!state) {
     if (!originalText || !originalText.trim()) return null
     return (
-      <div className="flex gap-[6px] mb-[4px] items-start">
-        <span className="mt-[5px] w-[3px] h-[3px] rounded-full bg-gray-500 flex-shrink-0" />
-        <span className="text-[9.5px] leading-relaxed">{renderBoldText(originalText)}</span>
+      <div className="flex gap-[8px] mb-[6px] items-start">
+        <span className="mt-[6px] w-[5px] h-[5px] rounded-full bg-gray-500 flex-shrink-0" />
+        <span className="text-sm leading-relaxed text-gray-800">{renderBoldText(originalText)}</span>
       </div>
     )
   }
@@ -52,12 +52,12 @@ export function ResumeBulletRow({
   // ── RIGHT PANE — STREAMING (AI is typing) ────────────────────
   if (status === 'streaming') {
     return (
-      <div className="flex gap-[6px] mb-[4px] items-start">
-        <span className="mt-[5px] w-[3px] h-[3px] rounded-full bg-blue-400 flex-shrink-0 animate-pulse" />
-        <span className="text-[9.5px] leading-relaxed text-blue-700 flex-1">
+      <div className="flex gap-[8px] mb-[6px] items-start">
+        <span className="mt-[6px] w-[5px] h-[5px] rounded-full bg-blue-400 flex-shrink-0 animate-pulse" />
+        <span className="text-sm leading-relaxed text-blue-700 flex-1">
           {renderBoldText(current)}
           {/* blinking cursor */}
-          <span className="inline-block w-[2px] h-[10px] bg-blue-500 ml-[2px] align-middle animate-pulse" />
+          <span className="inline-block w-[2px] h-[12px] bg-blue-500 ml-[2px] align-middle animate-pulse" />
         </span>
       </div>
     )
@@ -68,17 +68,17 @@ export function ResumeBulletRow({
     const spans = wordDiff(originalText, current)
 
     return (
-      <div className="flex gap-[6px] mb-[4px] items-start bg-yellow-50 rounded px-[4px] py-[2px]">
-        <span className="mt-[5px] w-[3px] h-[3px] rounded-full bg-yellow-500 flex-shrink-0" />
+      <div className="flex gap-[8px] mb-[6px] items-start bg-yellow-50 rounded px-[6px] py-[4px]">
+        <span className="mt-[6px] w-[5px] h-[5px] rounded-full bg-yellow-500 flex-shrink-0" />
 
         {/* diff text */}
-        <span className="text-[9.5px] leading-relaxed flex-1">
+        <span className="text-sm leading-relaxed flex-1 text-gray-800">
           {spans.map((span, i) => {
             if (span.type === 'insert') {
               return (
                 <ins
                   key={i}
-                  className="bg-green-100 text-green-800 no-underline rounded px-[2px]"
+                  className="bg-green-100 text-green-800 no-underline rounded px-[3px]"
                 >
                   {renderBoldText(span.text)}{' '}
                 </ins>
@@ -88,7 +88,7 @@ export function ResumeBulletRow({
               return (
                 <del
                   key={i}
-                  className="bg-red-100 text-red-700 line-through rounded px-[2px]"
+                  className="bg-red-100 text-red-700 line-through rounded px-[3px]"
                 >
                   {renderBoldText(span.text)}{' '}
                 </del>
@@ -99,18 +99,18 @@ export function ResumeBulletRow({
         </span>
 
         {/* accept / reject buttons */}
-        <div className="flex gap-[3px] items-start pt-[1px] flex-shrink-0">
+        <div className="flex gap-[4px] items-start pt-[2px] flex-shrink-0">
           <button
             onClick={onAccept}
             title="Accept this change"
-            className="text-[9px] px-[6px] py-[2px] rounded bg-green-100 text-green-800 hover:bg-green-200 font-medium"
+            className="text-xs px-[8px] py-[3px] rounded bg-green-100 text-green-800 hover:bg-green-200 font-medium cursor-pointer"
           >
             ✓
           </button>
           <button
             onClick={onReject}
             title="Reject — revert to original"
-            className="text-[9px] px-[6px] py-[2px] rounded bg-red-100 text-red-700 hover:bg-red-200 font-medium"
+            className="text-xs px-[8px] py-[3px] rounded bg-red-100 text-red-700 hover:bg-red-200 font-medium cursor-pointer"
           >
             ✗
           </button>
@@ -128,19 +128,19 @@ export function ResumeBulletRow({
   return (
     <div
       className={[
-        'flex gap-[6px] mb-[4px] items-start rounded px-[4px] py-[2px]',
+        'flex gap-[8px] mb-[6px] items-start rounded px-[6px] py-[4px]',
         status === 'accepted' ? 'bg-green-50' : '',
       ].join(' ')}
     >
       <span
         className={[
-          'mt-[5px] w-[3px] h-[3px] rounded-full flex-shrink-0',
+          'mt-[6px] w-[5px] h-[5px] rounded-full flex-shrink-0',
           status === 'accepted' ? 'bg-green-500' : 'bg-gray-500',
         ].join(' ')}
       />
-      <span className="text-[9.5px] leading-relaxed flex-1">{renderBoldText(current)}</span>
+      <span className="text-sm leading-relaxed flex-1 text-gray-800">{renderBoldText(current)}</span>
       {status === 'accepted' && (
-        <span className="text-[8px] text-green-600 flex-shrink-0 mt-[1px]">
+        <span className="text-xs text-green-600 flex-shrink-0 mt-[2px] font-medium">
           ✓ accepted
         </span>
       )}

@@ -17,10 +17,10 @@ export function A4Page({ children, locked = false }: A4PageProps) {
     <div
       className={[
         'bg-white shadow-lg mx-auto',
-        'w-full max-w-[794px] min-h-[1123px]',
-        'px-[64px] py-[54px]', // px-16 py-12
-        'font-[EB_Garamond] text-[10.5px] leading-relaxed text-gray-800',
-        locked ? 'opacity-75 pointer-events-none select-none' : '', //80
+        'w-full max-w-[850px]',
+        'px-[48px] py-[40px] sm:px-[64px] sm:py-[54px]', 
+        'font-[EB_Garamond] text-[15px] sm:text-[16px] leading-relaxed text-gray-800',
+        locked ? 'opacity-75 pointer-events-none select-none' : '', 
       ].join(' ')}
     >
       {children}
@@ -31,7 +31,7 @@ export function A4Page({ children, locked = false }: A4PageProps) {
 /** Section title — EXPERIENCE, SKILLS, EDUCATION */
 export function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-900 border-b border-gray-300 pb-[2px] mt-[14px] mb-[6px]">
+    <h2 className="text-[13px] sm:text-[14px] font-bold uppercase tracking-[0.12em] text-gray-900 border-b border-gray-300 pb-[3px] mt-[20px] mb-[8px]">
       {children}
     </h2>
   )

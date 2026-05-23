@@ -140,17 +140,17 @@ function EditorContent({
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden">
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-white border-b border-gray-200 flex-shrink-0 gap-3">
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 flex-shrink-0 gap-3">
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          <span className="font-bold text-sm text-blue-600">ResumeTailor</span>
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-50 border border-gray-200 rounded-full">
-            <span className="text-xs text-gray-600 max-w-[160px] truncate">
+          <span className="font-bold text-base text-blue-600">ResumeTailor</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 border border-gray-200 rounded-full">
+            <span className="text-sm text-gray-600 max-w-[200px] truncate">
               📄 {resume.name}
             </span>
             <button
               onClick={onResumeChange}
-              className="text-[10px] text-gray-400 hover:text-red-400 ml-1"
+              className="text-xs text-gray-400 hover:text-red-400 ml-1"
               title="Upload a different resume"
             >
               ✕
@@ -160,24 +160,24 @@ function EditorContent({
 
         <div className="flex items-center gap-3 flex-1 justify-center">
           {isLoading && (
-            <div className="flex items-center gap-2 text-xs text-blue-600">
-              <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               AI is tailoring your resume...
               <button onClick={stop} className="text-red-400 underline ml-1">stop</button>
             </div>
           )}
           {!isLoading && pendingCount > 0 && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="text-sm font-medium px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
               {pendingCount} change{pendingCount !== 1 ? 's' : ''} to review
             </span>
           )}
           {!isLoading && pendingCount === 0 && acceptedCount > 0 && (
-            <span className="text-xs text-green-600">
+            <span className="text-sm text-green-600">
               ✓ {acceptedCount} accepted — ready to download
             </span>
           )}
           {(aiError || dlError) && (
-            <span className="text-xs text-red-500">
+            <span className="text-sm text-red-500">
               ⚠ {aiError?.message || dlError}
             </span>
           )}
@@ -185,9 +185,9 @@ function EditorContent({
 
         <div className="flex gap-2 flex-shrink-0">
           {pendingCount > 0 && (
-            <button
+             <button
               onClick={acceptAll}
-              className="text-xs px-3 py-1.5 rounded bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
+              className="text-sm px-4 py-2 rounded bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
             >
               ✓ Accept All
             </button>
@@ -195,7 +195,7 @@ function EditorContent({
           <button
             onClick={() => jd.trim() && tailor(jd, 'user-resume')}
             disabled={isLoading || !jd.trim()}
-            className="text-xs px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="text-sm px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Tailoring...' : '✨ Tailor with AI'}
           </button>
@@ -225,15 +225,15 @@ function EditorContent({
 
         {/* Right pane: Preview */}
         <div className="flex-1 w-full overflow-y-auto bg-gray-100 p-5">
-          <p className="text-center text-[10px] text-gray-400 uppercase tracking-widest mb-3 select-none">
+          <p className="text-center text-xs text-gray-400 uppercase tracking-widest mb-3 select-none font-medium">
             ✏️ AI tailored version
           </p>
           {Object.values(rightState).some(s => s.status !== 'original') && (
-            <div className="flex gap-3 justify-center mb-3 text-[10px] text-gray-500 flex-wrap">
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-100 inline-block" /> Added</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-100 inline-block" /> Removed</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-yellow-50 border border-yellow-200 inline-block" /> Pending</span>
-              <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-50 border border-green-200 inline-block" /> Accepted</span>
+            <div className="flex gap-4 justify-center mb-4 text-xs text-gray-600 flex-wrap font-medium">
+              <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-green-100 inline-block" /> Added</span>
+              <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-red-100 inline-block" /> Removed</span>
+              <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-yellow-50 border border-yellow-200 inline-block" /> Pending</span>
+              <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-green-50 border border-green-200 inline-block" /> Accepted</span>
             </div>
           )}
           <A4Page>
@@ -308,10 +308,10 @@ function ResumeContent({
   return (
     <>
       {/* Header */}
-      <h1 className="text-[16px] font-bold text-center text-gray-900 tracking-wide">
+      <h1 className="text-[22px] sm:text-[24px] font-bold text-center text-gray-900 tracking-wide">
         {resume.name}
       </h1>
-      <p className="text-[8.5px] text-center text-gray-500 border-b-[1.5px] border-gray-800 pb-[8px] mb-[12px]">
+      <p className="text-[12px] sm:text-[13px] text-center text-gray-500 border-b-[1.5px] border-gray-800 pb-[10px] mb-[16px]">
         {resume.contact}
       </p>
 
@@ -319,7 +319,7 @@ function ResumeContent({
       {resume.objective && (
         <>
           <SectionTitle>Objective</SectionTitle>
-          <p className="text-[9px] text-gray-700 mb-[8px] leading-relaxed">{resume.objective}</p>
+          <p className="text-[13px] sm:text-[14px] text-gray-700 mb-[12px] leading-relaxed">{resume.objective}</p>
         </>
       )}
 
@@ -328,12 +328,12 @@ function ResumeContent({
         <>
           <SectionTitle>Experience</SectionTitle>
           {resume.experience.map(exp => (
-            <div key={exp.id} className="mb-[10px]">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10.5px] font-semibold text-gray-900">{exp.role}</span>
-                <span className="text-[8.5px] text-gray-500">{exp.date}</span>
+            <div key={exp.id} className="mb-[14px]">
+              <div className="flex justify-between items-baseline mb-[2px]">
+                <span className="text-[15px] sm:text-[16px] font-semibold text-gray-900">{exp.role}</span>
+                <span className="text-[12px] sm:text-[13px] text-gray-600">{exp.date}</span>
               </div>
-              <p className="text-[9px] text-gray-600 mb-[4px]">{exp.company}</p>
+              <p className="text-[13px] sm:text-[14px] text-gray-700 mb-[6px]">{exp.company}</p>
               {exp.bullets.map(b => (
                 <ResumeBulletRow
                   key={b.id}
@@ -352,21 +352,21 @@ function ResumeContent({
       {resume.skills.length > 0 && (
         <>
           <SectionTitle>Skills</SectionTitle>
-          <p className="text-[9px] text-gray-700 mb-[4px]">{resume.skills.join('  •  ')}</p>
+          <p className="text-[13px] sm:text-[14px] text-gray-700 mb-[8px] leading-relaxed">{resume.skills.join('  •  ')}</p>
         </>
       )}
 
       {/* Education — all degrees */}
       <SectionTitle>Education</SectionTitle>
       {allEducation.map((edu, i) => (
-        <div key={i} className="mb-[6px]">
-          <div className="flex justify-between items-baseline">
-            <span className="text-[10.5px] font-semibold text-gray-900">{edu.degree}</span>
-            <span className="text-[8.5px] text-gray-500">{edu.year}</span>
+        <div key={i} className="mb-[10px]">
+          <div className="flex justify-between items-baseline mb-[2px]">
+            <span className="text-[15px] sm:text-[16px] font-semibold text-gray-900">{edu.degree}</span>
+            <span className="text-[12px] sm:text-[13px] text-gray-600">{edu.year}</span>
           </div>
-          <p className="text-[9px] text-gray-600">{edu.school}</p>
+          <p className="text-[13px] sm:text-[14px] text-gray-700">{edu.school}</p>
           {edu.grade && (
-            <p className="text-[8.5px] text-gray-500">{edu.grade}</p>
+            <p className="text-[12px] sm:text-[13px] text-gray-500 mt-[2px]">{edu.grade}</p>
           )}
         </div>
       ))}
@@ -376,10 +376,10 @@ function ResumeContent({
         <>
           <SectionTitle>Projects</SectionTitle>
           {resume.projects.map(proj => (
-            <div key={proj.id} className="mb-[10px]">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10.5px] font-semibold text-gray-900">{proj.title}</span>
-                {proj.date && <span className="text-[8.5px] text-gray-500">{proj.date}</span>}
+            <div key={proj.id} className="mb-[14px]">
+              <div className="flex justify-between items-baseline mb-[6px]">
+                <span className="text-[15px] sm:text-[16px] font-semibold text-gray-900">{proj.title}</span>
+                {proj.date && <span className="text-[12px] sm:text-[13px] text-gray-600">{proj.date}</span>}
               </div>
               {proj.bullets.map(b => (
                 <ResumeBulletRow
@@ -400,7 +400,7 @@ function ResumeContent({
         <>
           <SectionTitle>Extra-Curricular Activities</SectionTitle>
           {resume.activities.map(act => (
-            <div key={act.id} className="mb-[6px]">
+            <div key={act.id} className="mb-[8px]">
               {act.bullets.map(b => (
                 <ResumeBulletRow
                   key={b.id}
