@@ -22,12 +22,23 @@ export function buildFinalResume(
   original:   ResumeJSON,
   rightState: RightPaneState
 ): ResumeJSON {
-  return {
+  const finalResume = {
     ...original,
     experience:  mergeBullets(original.experience,        rightState),
     projects:    mergeBullets(original.projects ?? [],    rightState),
     activities:  mergeBullets(original.activities ?? [],  rightState),
   }
+
+  const skillsState = rightState['skills-section']
+  if (skillsState?.status === 'accepted') {
+    // Break the accepted text back down into an array of strings by splitting the bullets
+    finalResume.skills = skillsState.current
+      .split('•')
+      .map(s => s.trim())
+      .filter(Boolean)
+  }
+
+  return finalResume
 }
 
 export function getAcceptedIds(rightState: RightPaneState): string[] {

@@ -33,6 +33,11 @@ function initRightState(resume: ResumeJSON): RightPaneState {
     })
   )
 
+  // Skills as a single editable block
+  if (resume.skills && resume.skills.length > 0) {
+    state['skills-section'] = { status: 'original', current: resume.skills.join(' • ') }
+  }
+
   return state
 }
 
@@ -112,11 +117,18 @@ function EditorContent({
       ...(resume.projects ?? []).flatMap(p => p.bullets),
       ...(resume.activities ?? []).flatMap(a => a.bullets),
     ]
-    const originalBullet = allBullets.find(b => b.id === id)
-    if (!originalBullet) return
+    let originalText = ''
+    if (id === 'skills-section') {
+      originalText = resume.skills.join(' • ')
+    } else {
+      const originalBullet = allBullets.find(b => b.id === id)
+      if (!originalBullet) return
+      originalText = originalBullet.text
+    }
+
     setRightState(prev => ({
       ...prev,
-      [id]: { status: 'original', current: originalBullet.text },
+      [id]: { status: 'original', current: originalText },
     }))
   }, [resume, setRightState])
 
@@ -345,7 +357,14 @@ function ResumeContent({
       {resume.skills.length > 0 && (
         <>
           <SectionTitle>Skills</SectionTitle>
-          <p className="text-[13px] sm:text-[14px] text-gray-700 mb-[8px] leading-relaxed">{resume.skills.join('  •  ')}</p>
+          <div className="mb-[8px]">
+            <ResumeBulletRow
+              originalText={resume.skills.join(' • ')}
+              state={rightState?.['skills-section']}
+              onAccept={() => onAccept?.('skills-section')}
+              onReject={() => onReject?.('skills-section')}
+            />
+          </div>
         </>
       )}
 

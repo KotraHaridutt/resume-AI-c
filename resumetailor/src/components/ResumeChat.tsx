@@ -57,6 +57,9 @@ export function ResumeChat({ resume, setRightState, jd, onJdChange, onTailor, is
             ...(resume.projects ?? []).flatMap(p => p.bullets),
             ...(resume.activities ?? []).flatMap(a => a.bullets),
           ]
+          if (resume.skills && resume.skills.length > 0) {
+            allBullets.push({ id: 'skills-section', text: resume.skills.join(' • ') })
+          }
 
           edits.forEach(edit => {
             if (!edit.bulletId || typeof edit.newText !== 'string') return

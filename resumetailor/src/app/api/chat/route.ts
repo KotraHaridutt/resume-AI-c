@@ -42,6 +42,10 @@ export async function POST(req: Request) {
       ...(resume.activities ?? []).flatMap(a => a.bullets),
     ]
 
+    if (resume.skills && resume.skills.length > 0) {
+      allBullets.push({ id: 'skills-section', text: resume.skills.join(' • ') })
+    }
+
     console.log('[CHAT API] Total bullets:', allBullets.length)
     if (allBullets.length === 0) {
       return Response.json({ error: 'No bullets found.' }, { status: 400 })
