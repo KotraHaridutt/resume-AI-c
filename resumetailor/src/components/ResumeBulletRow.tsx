@@ -30,7 +30,8 @@ export function ResumeBulletRow({
   // ── HELPER TO PARSE BOLD ─────────────────────────────────
   const renderBoldText = (text: string) => {
     if (!text) return null
-    return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
+    return text.split('**').map((part, i) => {
+      if (!part) return null
       if (i % 2 === 1) return <strong key={i} style={{ fontWeight: 700, WebkitFontSmoothing: 'antialiased' }} className="font-bold">{part}</strong>
       return <span key={i}>{part}</span>
     })
@@ -66,6 +67,7 @@ export function ResumeBulletRow({
   // ── RIGHT PANE — CHANGED (show diff + accept/reject) ─────────
   if (status === 'changed') {
     const spans = wordDiff(originalText, current)
+    let isBoldDiff = false;
 
     return (
       <div className="flex gap-[8px] mb-[6px] items-start bg-yellow-50 rounded px-[6px] py-[4px]">
@@ -74,13 +76,25 @@ export function ResumeBulletRow({
         {/* diff text */}
         <span className="text-sm leading-relaxed flex-1 text-gray-800">
           {spans.map((span, i) => {
+            const parts = span.text.split('**');
+            const elements = parts.map((part, pIdx) => {
+              const currentBold = isBoldDiff;
+              if (pIdx < parts.length - 1) isBoldDiff = !isBoldDiff;
+              if (!part) return null;
+              
+              const style = currentBold ? { fontWeight: 700, WebkitFontSmoothing: 'antialiased' as const } : undefined;
+              return currentBold 
+                ? <strong key={pIdx} style={style} className="font-bold">{part}</strong>
+                : <span key={pIdx}>{part}</span>
+            });
+
             if (span.type === 'insert') {
               return (
                 <ins
                   key={i}
                   className="bg-green-100 text-green-800 no-underline rounded px-[3px]"
                 >
-                  {renderBoldText(span.text)}{' '}
+                  {elements}{' '}
                 </ins>
               )
             }
@@ -90,11 +104,11 @@ export function ResumeBulletRow({
                   key={i}
                   className="bg-red-100 text-red-700 line-through rounded px-[3px]"
                 >
-                  {renderBoldText(span.text)}{' '}
+                  {elements}{' '}
                 </del>
               )
             }
-            return <span key={i}>{renderBoldText(span.text)} </span>
+            return <span key={i}>{elements} </span>
           })}
         </span>
 

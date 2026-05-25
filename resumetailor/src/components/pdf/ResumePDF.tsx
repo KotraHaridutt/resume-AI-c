@@ -108,11 +108,13 @@ const styles = StyleSheet.create({
 // ── Sub-components ────────────────────────────────────────
 
 function renderPdfBoldText(text: string) {
-  return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
+  if (!text) return null;
+  return text.split('**').map((part, i) => {
+    if (!part) return null;
     if (i % 2 === 1) {
       return <Text key={i} style={{ fontFamily: 'Times-Bold' }}>{part}</Text>;
     }
-    return part;
+    return <Text key={i}>{part}</Text>;
   });
 }
 

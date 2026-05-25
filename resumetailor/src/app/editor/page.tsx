@@ -55,7 +55,8 @@ function printHtml(html: string) {
 
 const renderBoldText = (text: string) => {
   if (!text) return null;
-  return text.split(/\*\*(.*?)\*\*/g).map((part, i) => {
+  return text.split('**').map((part, i) => {
+    if (!part) return null;
     if (i % 2 === 1) return <strong key={i} style={{ fontWeight: 'bold' }}>{part}</strong>
     return <span key={i}>{part}</span>
   })
