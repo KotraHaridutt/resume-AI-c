@@ -2,7 +2,6 @@
 import { useState, useCallback } from 'react'
 import { A4Page, SectionTitle }   from '@/components/A4Page'
 import { ResumeBulletRow }         from '@/components/ResumeBulletRow'
-import { JDInput }                 from '@/components/JDInput'
 import { useTailor }               from '@/hooks/useTailor'
 import { ResumeUpload }            from '@/components/ResumeUpload'
 import { useDownload }             from '@/hooks/useDownload'
@@ -192,13 +191,6 @@ function EditorContent({
               ✓ Accept All
             </button>
           )}
-          <button
-            onClick={() => jd.trim() && tailor(jd, 'user-resume')}
-            disabled={isLoading || !jd.trim()}
-            className="text-sm px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Tailoring...' : '✨ Tailor with AI'}
-          </button>
           <DownloadButton
             onClick={download}
             isGenerating={isGenerating}
@@ -208,19 +200,20 @@ function EditorContent({
         </div>
       </div>
 
-      {/* JD Input */}
-      <JDInput
-        value={jd}
-        onChange={onJdChange}
-        open={jdOpen}
-        onToggle={onJdToggle}
-      />
+      {/* JD Input removed from here, now inside ResumeChat */}
 
       {/* Split panes */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left pane: AI Chat */}
         <div className="w-1/3 min-w-[300px] border-r border-gray-300 bg-white">
-          <ResumeChat resume={resume} setRightState={setRightState} />
+          <ResumeChat 
+            resume={resume} 
+            setRightState={setRightState} 
+            jd={jd}
+            onJdChange={onJdChange}
+            onTailor={() => jd.trim() && tailor(jd, 'user-resume')}
+            isTailoring={isLoading}
+          />
         </div>
 
         {/* Right pane: Preview */}

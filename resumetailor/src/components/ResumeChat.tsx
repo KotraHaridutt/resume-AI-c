@@ -1,15 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { ResumeJSON, RightPaneState } from '@/types/resume'
 import type { TailorOutput } from '@/lib/tailor-schema'
 
 interface ResumeChatProps {
   resume: ResumeJSON
   setRightState: React.Dispatch<React.SetStateAction<RightPaneState>>
+  jd: string
+  onJdChange: (jd: string) => void
+  onTailor: () => void
+  isTailoring: boolean
 }
 
-export function ResumeChat({ resume, setRightState }: ResumeChatProps) {
+export function ResumeChat({ resume, setRightState, jd, onJdChange, onTailor, isTailoring }: ResumeChatProps) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
     {
       role: 'assistant',
@@ -18,6 +22,7 @@ export function ResumeChat({ resume, setRightState }: ResumeChatProps) {
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [jdExpanded, setJdExpanded] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -140,7 +145,39 @@ export function ResumeChat({ resume, setRightState }: ResumeChatProps) {
         )}
       </div>
 
-      <div className="p-3 border-t border-gray-200 bg-white flex-shrink-0">
+      <div className="p-3 border-t border-gray-200 bg-white flex-shrink-0 flex flex-col gap-3">
+        {jdExpanded ? (
+          <div className="flex flex-col gap-2 bg-blue-50/50 border border-blue-100 rounded-lg p-3">
+            <div className="flex justify-between items-center text-[11px] text-blue-800 font-semibold uppercase tracking-wide">
+              <span>📋 Job Description Tailor</span>
+              <button onClick={() => setJdExpanded(false)} className="text-blue-400 hover:text-blue-700">✕ Close</button>
+            </div>
+            <textarea 
+              value={jd} 
+              onChange={e => onJdChange(e.target.value)} 
+              placeholder="Paste the full job description here..."
+              className="w-full h-28 text-[13px] border border-blue-200 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none resize-none placeholder:text-gray-400 text-gray-700"
+            />
+            <button
+              onClick={() => {
+                setJdExpanded(false)
+                onTailor()
+              }}
+              disabled={isTailoring || !jd.trim()}
+              className="w-full px-3 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isTailoring ? '✨ Tailoring Resume...' : '✨ Tailor Entire Resume to Job'}
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setJdExpanded(true)}
+            className="text-xs text-blue-700 bg-blue-50 border border-blue-100 py-1.5 px-3 rounded shadow-sm hover:bg-blue-100 self-start flex items-center gap-1.5 transition-colors font-medium"
+          >
+            📋 Paste Job Description
+          </button>
+        )}
+
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
