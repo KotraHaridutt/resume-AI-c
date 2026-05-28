@@ -79,7 +79,7 @@ function EditorContent({
             resumeId:    'user-resume',
             jdText:      jd,
             aiEditsJson: edits,
-            modelUsed:   'google/gemini-2.0-flash-exp:free',
+            modelUsed:   'google/gemini-3-flash-preview',
           }),
         })
         
@@ -220,6 +220,7 @@ function EditorContent({
         <div className="w-1/3 min-w-[300px] border-r border-gray-300 bg-white">
           <ResumeChat 
             resume={resume} 
+            rightState={rightState}
             setRightState={setRightState} 
             jd={jd}
             onJdChange={onJdChange}

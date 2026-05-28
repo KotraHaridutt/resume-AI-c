@@ -31,8 +31,9 @@ function validateEdits(parsed: unknown): TailorOutput {
 
 export async function POST(req: Request) {
   try {
-    const { resume, prompt: userPrompt } = await req.json() as {
+    const { resume, rightState, prompt: userPrompt } = await req.json() as {
       resume: ResumeJSON
+      rightState?: Record<string, { status: string, current: string }>
       prompt: string
     }
 
@@ -44,6 +45,17 @@ export async function POST(req: Request) {
 
     if (resume.skills && resume.skills.length > 0) {
       allBullets.push({ id: 'skills-section', text: resume.skills.join(' • ') })
+    }
+
+    // Overlay any pending or accepted edits from rightState so the AI
+    // evaluates against the currently visible working draft, not the original.
+    if (rightState) {
+      for (const bullet of allBullets) {
+        const state = rightState[bullet.id]
+        if (state && state.status !== 'original') {
+          bullet.text = state.current
+        }
+      }
     }
 
     console.log('[CHAT API] Total bullets:', allBullets.length)
@@ -68,7 +80,7 @@ export async function POST(req: Request) {
       `BULLETS:\n[${bulletsList}]`
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },

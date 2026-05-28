@@ -6,6 +6,7 @@ import type { TailorOutput } from '@/lib/tailor-schema'
 
 interface ResumeChatProps {
   resume: ResumeJSON
+  rightState: RightPaneState
   setRightState: React.Dispatch<React.SetStateAction<RightPaneState>>
   jd: string
   onJdChange: (jd: string) => void
@@ -13,7 +14,7 @@ interface ResumeChatProps {
   isTailoring: boolean
 }
 
-export function ResumeChat({ resume, setRightState, jd, onJdChange, onTailor, isTailoring }: ResumeChatProps) {
+export function ResumeChat({ resume, rightState, setRightState, jd, onJdChange, onTailor, isTailoring }: ResumeChatProps) {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
     {
       role: 'assistant',
@@ -35,10 +36,11 @@ export function ResumeChat({ resume, setRightState, jd, onJdChange, onTailor, is
 
     // Hit the chat API
     try {
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume, prompt: userMessage })
+        body: JSON.stringify({ resume, rightState, prompt: userMessage })
       })
 
       if (!response.ok) throw new Error('Failed to fetch from chat API')
